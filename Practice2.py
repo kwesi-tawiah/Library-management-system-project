@@ -1,68 +1,84 @@
-class Book:
-    def __init__(self, title, year, author):
-        self.title = title
-        self.year = year
-        self.author = author
+# from inspect import AGEN_CLOSED
+
+from second import librarian
+
+
+class User():
+    def __init__(self, name, age, sex):
+        self.borrowed_books = []
+        self.name = name
+        self.age = age
+        self.sex = sex
         self.borrowed = False
 
-    def book_state(self):
-        status = "borrowed" if self.borrowed else "not borrowed"
-        print(
-            f"{self.title} was published in the ({self.year}) by {self.author} - {status}")
-
-    def borrow(self):
-        self.borrowed = True
-
-    def return_book(self):
-        self.borrowed = False
-
-
-book1 = Book("About", "1777", "James Brown")
-
-book2 = Book("Planes", "2777", "Bruce")
-
-book3 = Book("Quantum Physics", "1990", "Adjoa Kwartemaa Appiah")
-
-
-class Library:
-
-    def __init__(self):
-        self.books = []
-
-    def add_book(self, book):
-        self.books.append(book)
-        print("Book added to library.")
-
-    def show_books(self):
-        if self.books:
-            for book in self.books:
-                book.book_state()
+    def display_info(self):
+        if self.borrow == True:
+            if len(self.borrowed_books) > 1:
+                status = "Has borrowed books"
+            else:
+                status = "Has borrowed a book"
         else:
-            print("No book in the library.")
+            status = "Has not borrowed anything"
+        print(f"""
+Name: {self.name}
+Age: {self.age}
+Sex: {self.sex}
+Status: {status}
+No. of books borrowed: {self.borrowed_books.length()}
+Books borrowed: {self.borrowed_books}""")
 
-    def borrow_book(self, book):
-        if self.books:
-            if book in self.books and book.borrowed == False:
-                book.borrow()
-                print("Book borrowed.")
-            elif book.borrowed == True:
-                print("Book has been borrowed and is not available.")
-            elif book not in self.books:
-                print("Book is not in the library.")
+    def books_available(self):
+        librarian.show_books()
 
-    def return_books(self, book):
-        if book not in self.books and book.borrowed == True:
-            book.return_book()
-            print("Book returned to library.")
-        elif book in self.books:
-            print("Book available in library.")
+    def borrow_a_book(self, title):
+        if len(self.borrowed_books) == 5:
+            print("The maximum books you can borrow has been reached.")
+        else:
+            if librarian.bookes:
+                print("Waiting for permission....")
+                if librarian.borrow_notifications(self.name, title):
+                    print("Permission grated.")
+                    for book in librarian.bookes:
+                        if book.title == title and book.borrowed == False:
+                            book.borrow()
+                            print(f"Book borrowed from library.")
+                            break
+                        elif book.borrowed == True:
+                            print("Book has been borrowed and is not available.")
+                            break
+                    else:
+                        print("Book is not in the library.")
+                else:
+                    print("Permission denied.")
+            else:
+                print("No books in library.")
+            self.borrowed_books.append(title)
+            self.borrowed = True
+
+    def return_a_book(self, title):
+        if title not in self.borrowed_books:
+            print("You did not borrow this book from this library.")
+        else:
+            if librarian.bookes:
+                for book in librarian.bookes:
+                    if book.title == title and book.borrowed == True:
+                        book.return_book()
+                        librarian.return_notifications()
+                        print(f"Book returned to library.")
+                    else:
+                        print("Book not borrowed.")
+                    print("Book is not in library.")
+            else:
+                print("No book in library.")
+                self.borrowed_books.remove(title)
+                self.borrowed = False
 
 
-library = Library()
+user1 = User("Bruce", "15", "male")
+# ser3 = User("Adjoa Appiah", "17", "female")
+# user4 = User("Ama", "19", "female")
 
-library.add_book(book1)
-library.add_book(book2)
-library.add_book(book3)
-library.borrow_book(book1)
-library.borrow_book(book1)
-library.show_books()
+
+# user1.borrow_a_book("About")
+user1.books_available()
+user1.borrow_a_book("About")
