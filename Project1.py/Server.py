@@ -2,11 +2,11 @@ import re
 
 import pickle
 
-from Library import librarian
-
 import socket
 
 import Database
+
+import time
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -17,6 +17,8 @@ server.listen(1)
 client_socket, client_address = server.accept()
 
 print("Listening for users.....")
+
+users = []
 
 
 def show_user_books(self):
@@ -29,18 +31,18 @@ def show_user_books(self):
                 message = pickle.dumps("No books in library.")
                 length = len(message)
                 client_socket.send(pickle.dumps("deny"))
-                # time.sleep(1)
+                time.sleep(1)
                 client_socket.send(pickle.dumps((length)))
-                # time.sleep(1)
+                time.sleep(1)
                 client_socket.send(message)
                 break
             elif data and not fault:
                 message = pickle.dumps(data)
                 length = len(message)
                 client_socket.send(pickle.dumps("deny"))
-                # time.sleep(1)
+                time.sleep(1)
                 client_socket.send(pickle.dumps(length))
-                # time.sleep(1)
+                time.sleep(1)
                 client_socket.send(message)
                 break
             elif not data and fault:
@@ -48,9 +50,9 @@ def show_user_books(self):
                     "An error occurred. Please try again.")
                 length = len(message)
                 client_socket.send(pickle.dumps("deny"))
-                # time.sleep(1)
+                time.sleep(1)
                 client_socket.send(pickle.dumps(length))
-                # time.sleep(1)
+                time.sleep(1)
                 client_socket.send(message)
                 count += 1
                 continue
@@ -59,14 +61,16 @@ def show_user_books(self):
                 "Sorry, we are trying to solve this issue. Please try again later.")
             length = len(message)
             client_socket.send(pickle.dumps("deny"))
-            # time.sleep(1)
+            time.sleep(1)
             client_socket.send(message)
             print("(ALERT) A user cannot access books.")
     else:
         message = pickle.dumps(self.books)
         length = len(message)
         client_socket.send(pickle.dumps("pass"))
+        time.sleep(1)
         client_socket.send(pickle.dumps(length))
+        time.sleep(1)
         client_socket.send(message)
 
 
@@ -85,6 +89,7 @@ def add_user(self, name, sex, email, phone_number):
                             "You are already signed up.")
                         length = len(message)
                         client_socket.send(pickle.dumps(length))
+                        time.sleep(1)
                         client_socket.send(message)
                         print("This user has already signed up.")
                         break
@@ -97,8 +102,10 @@ def add_user(self, name, sex, email, phone_number):
                 self.users.append(user)
                 print("User added successfully.")
                 client_socket.send(pickle.dumps("ne"))
+                time.sleep(1)
                 length = len(pickle.dumps(user_id))
                 client_socket.send(pickle.dumps(length))
+                time.sleep(1)
                 client_socket.send(pickle.dumps(user_id))
         else:
             count += 1
@@ -114,6 +121,7 @@ def borrow_book(self, book_name, user_name, user_id):
                         f"{book.title.capitalize()} is not available.")
                     length = len(message)
                     client_socket.send(length)
+                    time.sleep(1)
                     client_socket.send(message)
                 elif book.borrowed == False:
                     book.borrow()
@@ -128,6 +136,7 @@ def borrow_book(self, book_name, user_name, user_id):
                                 "Borrow action was succesful, Happy reading!")
                             length = len(message)
                             client_socket.send(pickle.dumps(length))
+                            time.sleep(1)
                             client_socket.send(message)
                             break
                         else:
@@ -139,6 +148,7 @@ def borrow_book(self, book_name, user_name, user_id):
                             "Sorry, your borrow action was not succesful please try again later.")
                         length = len(message)
                         client_socket.send(pickle.dumps(length))
+                        time.sleep(1)
                         client_socket.send(message)
                         break
                     break
@@ -149,11 +159,13 @@ def borrow_book(self, book_name, user_name, user_id):
                 f"{book_name.capitalize()} is not in this library.")
             length = len(message)
             client_socket.send(pickle.dumps(length))
+            time.sleep(1)
             client_socket.send(message)
     else:
         message = pickle.dumps("There are no books in library.")
         length = len(message)
         client_socket.send(pickle.dumps(length))
+        time.sleep(1)
         client_socket.send(message)
 
 
@@ -166,6 +178,7 @@ def return_book(self, book_name, user_name, user_id):
                         f"{book.name.capitalize()} is not borrowed from this library.")
                     length = len(message)
                     client_socket.send(pickle.dumps(length))
+                    time.sleep(1)
                     client_socket.send(message)
                     break
                 elif book.borrowed == True:
@@ -182,6 +195,7 @@ def return_book(self, book_name, user_name, user_id):
                                 "{book.title.capitalize()} successfully returned to library.")
                             length = len(message)
                             client_socket.send(pickle.dumps(length))
+                            time.sleep(1)
                             client_socket.send(message)
                             break
                         else:
@@ -192,6 +206,7 @@ def return_book(self, book_name, user_name, user_id):
                             "Sorry, your return action was not succesful please try again later.")
                         length = len(message)
                         client_socket.send(pickle.dumps(length))
+                        time.sleep(1)
                         client_socket.send(message)
                         break
                     break
@@ -202,11 +217,13 @@ def return_book(self, book_name, user_name, user_id):
                 f"{book_name.capitalize()} is not a book of this library.")
             length = len(message)
             client_socket.send(pickle.dumps(length))
+            time.sleep(1)
             client_socket.send(message)
     else:
         message = pickle.dumps("There is no book in library.")
         length = len(message)
         client_socket.send(pickle.dumps(length))
+        time.sleep(1)
         client_socket.send(message)
 
 
@@ -260,10 +277,10 @@ elif client_address[0] == "127.0.0.1":
         if request.lower() == "show":
             print(data[9:])
             if approval():
-                if librarian.users:
-                    for user in librarian.users:
+                if users:
+                    for user in users:
                         if user["name"] == (search[1].group(1)):
-                            librarian.show_user_books()
+                            show_user_books()
                             break
                         else:
                             continue
@@ -306,7 +323,7 @@ elif client_address[0] == "127.0.0.1":
                 # match = re.search(pattern, rev, re.I)
                 # user_id = int(match.group(1))
                 if user_id:
-                    librarian.borrow_book(title, user_name, user_id)
+                    borrow_book(title, user_name, user_id)
                 else:
                     message = pickle.dumps(
                         "Please signup to access library books.")
@@ -329,7 +346,7 @@ elif client_address[0] == "127.0.0.1":
                 pattern = r"(\d*[A-Za-z][A-Za-z_%&$?+]*\d*[@gmail.com]*)|\d+"
                 search = list(re.finditer(pattern, text, re.I))
                 if search:
-                    librarian.add_user(search[0].group(1), search[1].group(
+                    add_user(search[0].group(1), search[1].group(
                         1), search[2].group(1), search[3].group(1))
                 else:
                     client_socket.send(pickle.dumps("nr"))
@@ -359,7 +376,7 @@ elif client_address[0] == "127.0.0.1":
                 # match = re.search(pattern, rev, re.I)
                 user_id = pickle.loads(client_socket.recv(10))
                 if user_id:
-                    librarian.return_book(title, user_name, user_id)
+                    return_book(title, user_name, user_id)
                 else:
                     message = pickle.dumps(
                         "Please signup to access library books.")
