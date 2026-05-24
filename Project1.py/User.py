@@ -25,7 +25,7 @@ class User():
                 email = input("Enter email: ")
                 sex = input("Enter sex: ")
                 phone_number = input("Phone_number: ")
-                pattern = r"^\d*[A-Za-z][A-Za-z_%!+&$?]*\d+[@gmail.com|@yahoo.com]$"
+                pattern = r"^\d*[A-Za-z][A-Za-z_%!+&$?]*\d+[@gmail.com]$"
 
                 if not name.isalpha() or not sex.isalpha():
                     print("Please enter only letters for the name and sex. Try again.")
@@ -73,10 +73,13 @@ class User():
                     elif data == "nr":
                         length = pickle.loads(client.recv(6))
                         data = pickle.loads(client.recv(length))
+                        print(data)
                         break
                     elif data == "de":
                         length = pickle.loads(client.recv(6))
                         data = pickle.loads(client.recv(length))
+                        print(data)
+                        break
 
         else:
             print("Okay, have a great day!")

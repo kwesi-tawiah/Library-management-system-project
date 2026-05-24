@@ -150,143 +150,9 @@ class Library:
             self.books.append(book)
             print("Book added to library.")
 
-    def add_user(self, name, sex, email, phone_number):
-        count = 0
-        while count < 3:
-            user_id = None
-            user_id = Database.insert_into_users(
-                name, sex, email, phone_number)
-            if user_id:
-                if self.users:
-                    for user in self.users:
-                        if user["name"] == name and user["id"] == user_id:
-                            client_socket.send(pickle.dumps("al"))
-                            message = pickle.dumps(
-                                "You are already signed up.")
-                            length = len(message)
-                            client_socket.send(pickle.dumps(length))
-                            client_socket.send(message)
-                            print("This user has already signed up.")
-                            break
-                        else:
-                            continue
-                    break
 
-                else:
-                    user = {"name": name, "id": user_id}
-                    self.users.append(user)
-                    print("User added successfully.")
-                    client_socket.send(pickle.dumps("ne"))
-                    length = len(pickle.dumps(user_id))
-                    client_socket.send(pickle.dumps(length))
-                    client_socket.send(pickle.dumps(user_id))
-            else:
-                count += 1
-                continue
-
-    def borrow_book(self, book_name, user_name, user_id):
-        if self.books:
-            for book in self.books:
-                if book.title.lower() == book_name.lower():
-                    if book.borrowed == True:
-                        message = pickle.dumps(
-                            f"{book.title.capitalize()} is not available.")
-                        length = len(message)
-                        client_socket.send(length)
-                        client_socket.send(message)
-                    elif book.borrowed == False:
-                        book.borrow()
-                        datetime_borrowed = book.datetime_borrowed
-                        count = 0
-                        while count < 3:
-                            further = None
-                            further = Database.insert_into_borrow_history_b(
-                                user_name, user_id, book_name, datetime_borrowed)
-                            if further:
-                                message = pickle.dumps(
-                                    "Borrow action was succesful, Happy reading!")
-                                length = len(message)
-                                client_socket.send(pickle.dumps(length))
-                                client_socket.send(message)
-                                break
-                            else:
-                                count += 1
-                                continue
-
-                        else:
-                            message = pickle.dumps(
-                                "Sorry, your borrow action was not succesful please try again later.")
-                            length = len(message)
-                            client_socket.send(pickle.dumps(length))
-                            client_socket.send(message)
-                            break
-                        break
-                else:
-                    continue
-            else:
-                message = pickle.dumps(
-                    f"{book_name.capitalize()} is not in this library.")
-                length = len(message)
-                client_socket.send(pickle.dumps(length))
-                client_socket.send(message)
-        else:
-            message = pickle.dumps("There are no books in library.")
-            length = len(message)
-            client_socket.send(pickle.dumps(length))
-            client_socket.send(message)
-
-    def return_book(self, book_name, user_name, user_id):
-        if self.books:
-            for book in self.books:
-                if book.title.lower() == book_name.lower():
-                    if book.borrowed == False:
-                        message = pickle.dumps(
-                            f"{book.name.capitalize()} is not borrowed from this library.")
-                        length = len(message)
-                        client_socket.send(pickle.dumps(length))
-                        client_socket.send(message)
-                        break
-                    elif book.borrowed == True:
-                        book.return_book()
-                        datetime_returned = book.returned_time
-                        book_borrowed = book.title
-                        count = 0
-                        while count < 3:
-                            further = None
-                            further = Database.update_borrow_history_r(
-                                user_name, user_id, datetime_returned, book_borrowed)
-                            if not further:
-                                message = pickle.dumps(
-                                    "{book.title.capitalize()} successfully returned to library.")
-                                length = len(message)
-                                client_socket.send(pickle.dumps(length))
-                                client_socket.send(message)
-                                break
-                            else:
-                                count += 1
-                                continue
-                        else:
-                            message = pickle.dumps(
-                                "Sorry, your return action was not succesful please try again later.")
-                            length = len(message)
-                            client_socket.send(pickle.dumps(length))
-                            client_socket.send(message)
-                            break
-                        break
-                else:
-                    continue
-            else:
-                message = pickle.dumps(
-                    f"{book_name.capitalize()} is not a book of this library.")
-                length = len(message)
-                client_socket.send(pickle.dumps(length))
-                client_socket.send(message)
-        else:
-            message = pickle.dumps("There is no book in library.")
-            length = len(message)
-            client_socket.send(pickle.dumps(length))
-            client_socket.send(message)
 # Handle below
+
 
     def show_books(self):
         if not self.books:
@@ -322,56 +188,6 @@ Borrowed: {b}
             for book in self.books:
                 print(f"Book_id: {book.id}", sep="")
                 book.book_state()
-
-    def show_user_books(self):
-        if not self.books:
-            count = 0
-            while count < 2:
-                data, fault = None, None
-                data, fault = Database.show_table("books")
-                if not data and not fault:
-                    message = pickle.dumps("No books in library.")
-                    length = len(message)
-                    client_socket.send(pickle.dumps("deny"))
-                    # time.sleep(1)
-                    client_socket.send(pickle.dumps((length)))
-                    # time.sleep(1)
-                    client_socket.send(message)
-                    break
-                elif data and not fault:
-                    message = pickle.dumps(data)
-                    length = len(message)
-                    client_socket.send(pickle.dumps("deny"))
-                    # time.sleep(1)
-                    client_socket.send(pickle.dumps(length))
-                    # time.sleep(1)
-                    client_socket.send(message)
-                    break
-                elif not data and fault:
-                    message = pickle.dumps(
-                        "An error occurred. Please try again.")
-                    length = len(message)
-                    client_socket.send(pickle.dumps("deny"))
-                    # time.sleep(1)
-                    client_socket.send(pickle.dumps(length))
-                    # time.sleep(1)
-                    client_socket.send(message)
-                    count += 1
-                    continue
-            else:
-                message = pickle.dumps(
-                    "Sorry, we are trying to solve this issue. Please try again later.")
-                length = len(message)
-                client_socket.send(pickle.dumps("deny"))
-                # time.sleep(1)
-                client_socket.send(message)
-                print("(ALERT) A user cannot access books.")
-        else:
-            message = pickle.dumps(self.books)
-            length = len(message)
-            client_socket.send(pickle.dumps("pass"))
-            client_socket.send(pickle.dumps(length))
-            client_socket.send(message)
 
     def show_users(self):
         count = 0
@@ -460,16 +276,6 @@ Returned: {person[8]}
                 continue
         else:
             print("There is no history of this user.")
-
-    def approval(self):
-        while True:
-            approve = input("Do you approve?(yes/no): ")
-            if approve.lower() == "yes":
-                return True
-            elif approve.lower() == "no":
-                return False
-            else:
-                continue
 
 
 librarian = Library()
