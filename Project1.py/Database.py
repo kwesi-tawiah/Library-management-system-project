@@ -3,16 +3,19 @@ import random
 
 
 def finder(ids):
-    limit = len(ids)
     ix = 0
     state = 0
-    while ix < limit:
+    if not ids:
         user_id = random.randint(0, 100)
-        if not ids:
-            return user_id, state
-        if ids[ix] == user_id:
-            state += 1
-        ix += 1
+    else:
+        limit = len(ids)
+        while ix < limit:
+            user_id = random.randint(0, 100)
+            if not ids:
+                return user_id, state
+            if ids[ix] == user_id:
+                state += 1
+            ix += 1
     return user_id, state
 
 
@@ -127,15 +130,21 @@ select user_id from users
 
 def insert_into_books(book_name, year, author, borrow_time):
     try:
-        conn, cursor = None, None
+        conn, cursor, user_id = None, None, None
         conn, cursor = get_connection()
 
         cursor.execute("""
+select book_name, year, author from books""")
+
+        cmps = cursor.fetchall()
+
+        if not cmps:
+            cursor.execute("""
 select book_id from books
 """)
 
-        ids = cursor.fetchall()
-        if ids:
+            ids = cursor.fetchall()
+            # if ids:
             user_id, state = finder(ids)
             while True:
                 if state != 0:
@@ -144,15 +153,37 @@ select book_id from books
                     break
 
             cursor.execute("""
-insert into books(book_name, year, author, borrow_time, borrowed)
-values(?, ?, ?, ?, ?)
+insert into books(book_id, book_name, year, author, borrow_time, borrowed)
+values(?, ?, ?, ?, ?, ?)
 """, (user_id, book_name, year, author, borrow_time, "no"))
             conn.commit()
-            print("Book added.")
 
+        # else:
+        # print(
+        #    "Book not added beacause the books ids failed to load. Please try again.")
         else:
-            print(
-                "Book not added beacause the books ids failed to load. Please try again.")
+            for book in cmps:
+                if book[0].lower() == book_name.lower() and book[2].lower() == author.lower() and book[1] == year:
+                    pass
+            else:
+                cursor.execute("""
+select book_id from books
+""")
+
+            ids = cursor.fetchall()
+            # if ids:
+            user_id, state = finder(ids)
+            while True:
+                if state != 0:
+                    user_id, state = finder(ids)
+                elif state == 0:
+                    break
+
+            cursor.execute("""
+insert into books(book_id, book_name, year, author, borrow_time, borrowed)
+values(?, ?, ?, ?, ?, ?)
+""", (user_id, book_name, year, author, borrow_time, "no"))
+            conn.commit()
 
     except sqlite3.Error as error:
         if conn:
@@ -359,3 +390,65 @@ select * from borrow_history where name = ?
         close(conn, cursor)
 
     return users, fault
+
+
+def delete(table):
+    conn, cursor, fault = None, None, None
+    try:
+
+        conn, cursor = get_connection()
+
+        if table.lower() == "books":
+
+            cursor.execute("""
+select * from books
+""")
+            fault = cursor.fetchone()
+            if fault:
+                cursor.execute("""
+delete from books
+""")
+                conn.commit()
+                print("Books deleted!")
+            else:
+                print("Books is already empty.")
+
+        elif table.lower() == "borrow_history":
+
+            cursor.execute("""
+select * from borrow_history
+""")
+            fault = cursor.fetchone()
+            if fault:
+                cursor.execute("""
+delete from borrow_history
+""")
+                conn.commit()
+                print("Borrow_history deleted!")
+            else:
+                print("Borrow_history is already empty.")
+
+        elif table.lower() == "users":
+
+            cursor.execute("""
+select * from users
+""")
+            fault = cursor.fetchone()
+            if fault:
+                cursor.execute("""
+delete from users
+""")
+                conn.commit()
+                print("Users deleted!")
+            else:
+                print("Users is already empty.")
+        else:
+            print("Invalid input. Try again.")
+
+    except sqlite3.Error as error:
+        if conn:
+            conn.rollback()
+        print(f"Deletion failed: {type(error).__name__}")
+        print(error)
+    finally:
+        close(conn, cursor)

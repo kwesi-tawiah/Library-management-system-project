@@ -5,6 +5,7 @@ import re
 import pickle
 
 import time
+
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 client.connect(("127.0.0.1", 8080))
@@ -24,13 +25,14 @@ class User():
                 email = input("Enter email: ")
                 sex = input("Enter sex: ")
                 phone_number = input("Phone_number: ")
-                pattern = r"^\d*[A-Za-z][A-Za-z_%!+&$?]*\d+@gmail.com$"
+                pattern = r"^\d*[A-Za-z][A-Za-z_%!+&$?]*\d+[@gmail.com|@yahoo.com]$"
 
                 if not name.isalpha() or not sex.isalpha():
                     print("Please enter only letters for the name and sex. Try again.")
                     continue
                 elif sex.lower() not in ["female", "male"]:
                     print("Sex must be male or female. Please try again")
+                    continue
                 elif not phone_number.isdigit():
                     print("Please enter only numbers for the phone number. Try again.")
                 elif len(phone_number) > 10 or len(phone_number) < 10:
@@ -49,9 +51,9 @@ class User():
                         f"(SIGNUP) ({name},{sex},{email},{phone_number})")
                     length = len(request)
                     client.send(pickle.dumps(length))
-                    time.sleep(1)
+                    # time.sleep(1)
                     client.send(request)
-                    time.sleep(1)
+                    # time.sleep(1)
                     data = pickle.loads(client.recv(20))
                     if not data:
                         print("Server not active!")
@@ -85,7 +87,7 @@ class User():
         length = len(request)
 
         client.send(pickle.dumps(length))
-        time.sleep(1)
+        # time.sleep(1)
         client.send(request)
         correct = pickle.loads(client.recv(30))
         length = pickle.loads(client.recv(10))
