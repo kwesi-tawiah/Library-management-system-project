@@ -14,22 +14,9 @@ client_socket, client_address = server.accept()
 
 print(f"Connected to {client_address}")
 
-name = "Bruce"
-want = "wants to test"
-some = "something"
+print(f"Client message 1: {client_socket.recv(1024).decode("utf-8")}")
+print(f"Client message 2: {client_socket.recv(1024).decode("utf-8")}")
 
-lists = [(name, want, some), ("Christopher Bruce", "17", "Pku")]
-num = pickle.dumps(10000)
-client_socket.send(pickle.dumps(len(num)))
-client_socket.send(num)
-
-client_socket.send(str(10).encode())
-
-
-print(f"{client_socket.recv(1024).decode()}")
-
-
-client_socket.send(str(2.3).encode())
 
 client_socket.close()
 
