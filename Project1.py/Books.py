@@ -18,7 +18,7 @@ class Book:
         self.borrowed = False
         self.borrow_time = borrow_time
         self.return_time = 0
-        self.datetime_borrowed = 0
+        self.datetime_borrowed = 0,
         self.returned_time = 0
 
     def book_state(self):

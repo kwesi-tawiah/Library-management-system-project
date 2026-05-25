@@ -1,11 +1,10 @@
 import Books
 
-
 import Database
 
-import pickle
+import socket
 
-# import time
+import threading
 
 
 class Library:
@@ -16,8 +15,8 @@ class Library:
             books, fault = None, None
             books, fault = Database.load_books()
             if books and not fault:
-                if self.users:
-                    for b in books:
+                if self.books:
+                    for b in books: # the first fix is herre for b in bookes
                         for book in self.books:
                             if book.title.lower() == b[1].lower() and book.author.lower() == b[3].lower():
                                 break
@@ -30,7 +29,7 @@ class Library:
                                 book.borrowed = False
                                 self.books.append(book)
                 else:
-                    for b in books:
+                    for b in books: # also here for b in bookes must refer to the fetched data
                         book = Books.Book(b[1], b[2], b[3], b[4])
                         book.id = b[0]
                         if b[5].lower() == "yes":
@@ -149,10 +148,6 @@ class Library:
             book.id = _id
             self.books.append(book)
             print("Book added to library.")
-
-
-# Handle below
-
 
     def show_books(self):
         if not self.books:
@@ -277,23 +272,51 @@ Returned: {person[8]}
         else:
             print("There is no history of this user.")
 
+def notifications():
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(("127.0.0.1", 8080))
+
+        while True:
+
+            client.send("Update".encode("utf-8"))
+
+            message = client.recv(20).decode("utf-8")
+
+            if message.lower() == "new user":
+                librarian.load_users()
+                continue
+
+            elif message.lower() == "borrow":
+                message = client.recv(1024).decode("utf-8")
+                if message:
+                    print(message)
+                continue
+
+            elif message.lower() == "return":
+                message = client.recv(1024).decode("utf-8")
+                if message:
+                    print(message)
+                continue
+
+            else:
+                continue
 
 librarian = Library()
 
-librarian.delete_table("users")
-librarian.delete_table("books")
+#librarian.delete_table("users")
+#librarian.delete_table("books")
 
 print("Shown!")
 librarian.show_books()
 print("Shown!")
 
-librarian.add_book("Physics", "1990", "Bruce", 2)
-librarian.add_book("Chemistry", "2020", "Chris", 3)
-librarian.add_book("Mathematics", "1919", "Adjoa", 1)
+#librarian.add_book("Physics", "1990", "Bruce", 2)
+#librarian.add_book("Chemistry", "2020", "Chris", 3)
+#librarian.add_book("Mathematics", "1919", "Adjoa", 1)
 
-print("Shown!")
-librarian.show_books()
-print("Shown!")
+#print("Shown!")
+#librarian.show_books()
+#print("Shown!")
 
 
 # librarian.delete_table("borrow_history")
@@ -305,3 +328,6 @@ librarian.add_book("Mathematics", "1919", "Adjoa", 1)
 print("Shown!")
 librarian.show_books()
 print("Shown!")
+
+Thread = threading.Thread(target = notifications, daemon = True)
+Thread.start()
