@@ -86,9 +86,6 @@ def load_users():
         else:
             print("There are no signed up users yet.")
 
-load_books()
-load_users()
-
 def show_user_books():
     if not books:
         count = 0
@@ -146,6 +143,7 @@ def add_user(name, sex, email, phone_number, client_socket):
     count = 0
     while count < 2:
         user_id = None
+        #print(f"name: {name}, sex: {sex}, phone_number: {phone_number}, email: {email}")
         user_id = Database.insert_into_users(
             name, sex, email, phone_number)
         if user_id:
@@ -156,7 +154,7 @@ def add_user(name, sex, email, phone_number, client_socket):
                         exists = True
                         
                         #client_socket.close()
-                        #print("This user has already signed up.")
+                        print("This user has already signed up.")
                         break
                     else:
                         continue
@@ -213,6 +211,12 @@ def borrow_book(book_name, user_name, user_id, client_socket):
                     count = 0
                     while count < 3:
                         further = None
+                        #print(datetime_borrowed)
+                        print(f"""
+User_name: {user_name}
+User_id: {user_id}
+Book_borrowed: {book_name}
+Datetime_borrowed: {datetime_borrowed}""")
                         further = Database.insert_into_borrow_history_b(
                             user_name, user_id, book_name, datetime_borrowed)
                         if further:
@@ -265,17 +269,35 @@ def return_book(book_name, user_name, user_id, client_socket):
                     client_socket.send(message)
                     break
                 elif book.borrowed == True:
+                    u_id = None
+                    u_id = Database.get_id(book_name.lower())
+                    if u_id:
+                        if u_id[0] == user_id:
+                            pass
+                        else:
+                            message = pickle.dumps("Return action denied. You did not borrow this book.")
+                            length = len(message)
+                            client_socket.send(pickle.dumps(length))
+                            time.sleep(1)
+                            client_socket.send(message)
+                            return
+                    else:
+                        message = pickle.dumps(
+                            "None Sorry, your return action was not succesful please try again later.")
+                        length = len(message)
+                        client_socket.send(pickle.dumps(length))
+                        time.sleep(1)
+                        client_socket.send(message)
+                        return
+
                     book.return_book()
-                    datetime_returned = book.returned_time
-                    book_borrowed = book.title
                     count = 0
                     while count < 3:
                         further = None
                         further = Database.update_borrow_history_r(
-                            user_name, user_id, datetime_returned, book_borrowed)
+                            user_name, user_id, book.returned_time, book.title.lower())
                         if not further:
-                            message = pickle.dumps(
-                                "{book.title.capitalize()} successfully returned to library.")
+                            message = pickle.dumps(f"{book.title.capitalize()} successfully returned to library.")
                             length = len(message)
                             client_socket.send(pickle.dumps(length))
                             time.sleep(1)
@@ -329,11 +351,33 @@ def cont():
         else:
             continue
 
+def reset():
+    count = 0
+    while count < 3:
+        fault = Database.reset()
+        if not fault:
+            break
+        count += 1
+    else:
+        print("Reset failed.")
+
+def delete_table(table):
+        if table.lower() == "books":
+            books.clear()
+        elif table.lower() == "users":
+            users.clear()
+        Database.delete(table.lower())
+
+delete_table("users")
+reset()
+load_books()
+load_users()
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 server.bind(("0.0.0.0", 3001))
 
-server.listen(1)
+server.listen(2)
 
 print("Listening for users.....")
 
@@ -412,9 +456,9 @@ while True:
                     "Sorry your request was disapproved.")
                     length = len(message)
                     client_socket.send(pickle.dumps("deny"))
-                    # time.sleep(1)
+                    time.sleep(1)
                     client_socket.send(pickle.dumps(length))
-                    # time.sleep(1)
+                    time.sleep(1)
                     client_socket.send(message)
 
                     client_socket.close()
@@ -438,7 +482,7 @@ while True:
                         "Please signup to access library books.")
                         length = len(message)
                         client_socket.send(pickle.dumps(length))
-                        # time.sleep(1)
+                        time.sleep(1)
                         client_socket.send(message)
 
                         client_socket.close()
@@ -447,7 +491,7 @@ while True:
                     "Sorry, your request was denied.")
                     length = len(message)
                     client_socket.send(pickle.dumps(length))
-                    # time.sleep(1)
+                    time.sleep(1)
                     client_socket.send(message)
 
                     client_socket.close()
@@ -479,7 +523,7 @@ while True:
                     "Sorry, your request was denied.")
                     length = len(message)
                     client_socket.send(pickle.dumps(length))
-                    # time.sleep(1)
+                    time.sleep(1)
                     client_socket.send(message)
 
                     client_socket.close()
@@ -501,7 +545,7 @@ while True:
                         "Please signup to access library books.")
                         length = len(message)
                         client_socket.send(pickle.dumps(length))
-                        # time.sleep(1)
+                        time.sleep(1)
                         client_socket.send(message)
 
                         client_socket.close()
@@ -511,7 +555,7 @@ while True:
                     "Sorry, your request was denied.")
                     length = len(message)
                     client_socket.send(pickle.dumps(length))
-                    # time.sleep(1)
+                    time.sleep(1)
                     client_socket.send(message)
 
                     client_socket.close()

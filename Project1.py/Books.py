@@ -22,7 +22,7 @@ class Book:
         self.returned_time = 0
 
     def book_state(self):
-        status = f"Borrowed, due in {self.return_time}" if self.borrowed else "Not borrowed"
+        status = f"Borrowed, due on {self.return_time}" if self.borrowed else "Not borrowed"
         print(f"""
 Title: {self.title}
 Year: {self.year}

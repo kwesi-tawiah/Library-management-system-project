@@ -75,7 +75,7 @@ book_id integer,
 book_name text,
 year text,
 author text,
-borrow_time,
+borrow_time integer,
 borrowed text                                                                       
 )
 """)
@@ -112,9 +112,9 @@ select user_id from users
                 break
 
         cursor.execute("""
-    insert into users(user_id, sex, name, email, phone_number)
+    insert into users(user_id, name, sex, email, phone_number)
     values(?, ?, ?, ?, ?)
-    """, (user_id, name, sex, email, phone_number))
+    """, (user_id, name.lower(), sex.lower(), email.lower(), phone_number))
         conn.commit()
 
     except sqlite3.Error as error:
@@ -155,7 +155,7 @@ select book_id from books
             cursor.execute("""
 insert into books(book_id, book_name, year, author, borrow_time, borrowed)
 values(?, ?, ?, ?, ?, ?)
-""", (user_id, book_name, year, author, borrow_time, "no"))
+""", (user_id, book_name.lower(), year, author.lower(), borrow_time, "no"))
             conn.commit()
 
         # else:
@@ -163,7 +163,7 @@ values(?, ?, ?, ?, ?, ?)
         #    "Book not added beacause the books ids failed to load. Please try again.")
         else:
             for book in cmps:
-                if book[0].lower() == book_name.lower() and book[2].lower() == author.lower() and book[1] == year:
+                if book[0].lower() == book_name.lower() and book[0].lower() == author.lower() and book[0] == year:
                     pass
             else:
                 cursor.execute("""
@@ -203,9 +203,10 @@ def insert_into_borrow_history_b(name, user_id, book_borrowed, datetime_borrowed
 
         cursor.execute("""
 select sex, email, phone_number from users where name = ? and user_id = ?
-""", (name, user_id))
+""", (name.lower(), user_id))
 
-        person = cursor.fetchall()
+        person = cursor.fetchone()
+        #print(person)
         if person:
             sex = person[0]
             email = person[1]
@@ -215,13 +216,13 @@ select sex, email, phone_number from users where name = ? and user_id = ?
                 f"During history insertion {name.capitalize()} was not found.")
 
         cursor.execute("""
-insert into borrow_history(user_id, name, sex, email, phone_number, book_borrowed, datetime_borrowed, returned)
-values(?, ?, ?, ?, ?, ?, ?)
-""", (user_id, name, sex, email, phone_number, book_borrowed, datetime_borrowed, "no"))
+insert into borrow_history(user_id, name, sex, email, phone_number, book_borrowed, datetime_borrowed, returned) 
+values(?, ?, ?, ?, ?, ?, ?, ?)
+""", (user_id, name.lower(), sex.lower(), email.lower(), phone_number, book_borrowed.lower(), datetime_borrowed, "no"))
 
         cursor.execute("""
 update books set borrowed = ? where book_name = ?
-""", ("yes", book_borrowed))
+""", ("yes", book_borrowed.lower()))
 
         conn.commit()
 
@@ -239,20 +240,21 @@ update books set borrowed = ? where book_name = ?
         return True
 
 
-def update_borrow_history_r(name, user_id, datetime_returned, book_borrowed):
-    further = False
+def update_borrow_history_r(name, user_id, date, book_borrowed):
+    conn, cursor, further = None, None, False
     try:
         returned = "yes"
-        conn, cursor = None, None
         conn, cursor = get_connection()
 
         cursor.execute("""
-update borrow_history set datetime_returned = ?,  returned = ? where name = ? and user_id and book_borrowed = ? and returned = ''
-""", (datetime_returned, returned, name, user_id, book_borrowed))
+update borrow_history set datetime_returned = ?, returned = ? where name = ? and user_id = ? and book_borrowed = ? and returned = ?
+""", (date, returned, name.lower(), user_id, book_borrowed.lower(), "no"))
+
+        conn.commit()
 
         cursor.execute("""
 update books set borrowed = ? where book_name = ?
-""", ("yes", book_borrowed))
+""", ("no", book_borrowed))
 
         conn.commit()
 
@@ -367,7 +369,7 @@ select book_id, book_name, year, author, borrow_time, borrowed from books
     return books, fault
 
 
-def show_user_borrow_history(user):
+def show_user_borrow_history(user, user_id):
 
     users, fault = None, False
     try:
@@ -375,8 +377,8 @@ def show_user_borrow_history(user):
         conn, cursor = get_connection()
 
         cursor.execute("""
-select * from borrow_history where name = ?
-""", (user,))
+select * from borrow_history where name = ? and user_id = ?
+""", (user.lower(), user_id))
 
         users = cursor.fetchall()
 
@@ -452,3 +454,83 @@ delete from users
         print(error)
     finally:
         close(conn, cursor)
+
+
+def reset():
+    fault, conn, cursor = False, None, None
+    try:
+        conn, cursor = get_connection()
+
+        cursor.execute("""
+delete from borrow_history
+""")
+        conn.commit()
+        
+        cursor.execute("""
+delete from users""")
+        
+        conn.commit()
+        
+        cursor.execute("""
+select book_id, book_name from books""")
+        
+        books = cursor.fetchall()
+        if books:
+            for book in books:
+                cursor.execute("""
+update books set borrowed = ? where book_name = ? and book_id = ?
+""", ("no", book[1], book[0]))
+                conn.commit()
+        else:
+            print("There are no books in library.")
+
+    except sqlite3.Error as error:
+        if conn:
+            conn.rollback()
+        print(f"An error occurred: {type(error).__name__}")
+        print(error)
+        fault = True
+
+    finally:
+        close(conn, cursor)
+    return fault
+
+
+def get_id(book_name):
+    conn, cursor, user_id = None, None, None
+    try:
+        conn, cursor = get_connection()
+
+        cursor.execute("""
+select user_id from borrow_history where book_borrowed = ? and returned = ?
+""", (book_name, "no"))
+        
+        user_id = cursor.fetchone()
+
+    except sqlite3.Error as error:
+        print(f"Selection error: {type(error).__name__}")
+        print(error)
+    finally:
+        close(conn, cursor)
+    return user_id
+
+
+def get_datetime(book_name):
+    conn, cursor, book = None, None, None
+    try:
+        conn, cursor = get_connection()
+
+        cursor.execute("""
+select datetime_borrowed from borrow_history where book_borrowed = ? and returned = ?
+""", (book_name.lower(), "no"))
+        book = cursor.fetchall()
+        #print(book)
+
+    except sqlite3.Error as error:
+        if conn:
+            conn.rollback()
+        print(f"Selection error: {type(error).__name__}")
+        print(error)
+    finally:
+        close(conn, cursor)
+    return book

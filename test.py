@@ -16,3 +16,12 @@ search = list(re.finditer(pattern, text, re.I))
 
 for match in search:
     print(match.group(1))
+
+
+tup = [(19)]
+
+
+
+print(tup[0])
+
+print(tup)

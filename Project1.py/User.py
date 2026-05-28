@@ -10,7 +10,7 @@ class User():
 
     def __init__(self):
         self.id = None
-        question = input("Do you want to sign up?(yes/no) ")
+        question = input("Do you want to sign up or sign in?(yes/no) ")
 
         if question.lower() == "yes":
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,8 +19,8 @@ class User():
             while True:
 
                 name = input("Enter name: ")
-                email = input("Enter email: ")
                 sex = input("Enter sex: ")
+                email = input("Enter email: ")
                 phone_number = input("Phone_number: ")
                 pattern = r"^[A-Za-z0-9_%+\-]+(?:\.[A-Za-z0-9_%+\-]+)*@[A-Za-z0-9\-]+(?:\.[A-Za-z]{2,})+$"
 
@@ -83,7 +83,7 @@ class User():
             print("Okay, have a great day!")
 
     def show_library_books(self):
-        if not self.name:
+        if not self.id:
             print("You do not have a user name or user id. Please sign up first.")
             return
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,7 +122,7 @@ Borrowed: {book[5]}""")
         client.close()
 
     def borrow_book(self, title):
-        if not self.name or not self.id:
+        if not self.id:
             print("You are not signed up or user id. Please sigh up first.")
             return
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -132,10 +132,11 @@ Borrowed: {book[5]}""")
             f"(BORROW) / A user named ({self.name}) wants to borrow the book titled ({title}).")
         length = len(request)
         client.send(pickle.dumps(length))
+        time.sleep(1)
         client.send(request)
         time.sleep(1)
         client.send(pickle.dumps(self.id))
-        time.sleep(1)
+        #time.sleep(1)
         length = pickle.loads(client.recv(1024))
         data = pickle.loads(client.recv(length))
         print(data)
@@ -143,7 +144,7 @@ Borrowed: {book[5]}""")
         client.close()
 
     def return_book(self, title):
-        if not self.name or not self.id:
+        if not self.id:
             print("You are not signed up or user id. Please sigh up first.")
             return
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -153,6 +154,7 @@ Borrowed: {book[5]}""")
             f"(RETURN) / A user named ({self.name}) want to return the book titled ({title}).")
         length = len(request)
         client.send(pickle.dumps(length))
+        time.sleep(1)
         client.send(request)
         time.sleep(1)
         client.send(pickle.dumps(self.id))
@@ -168,6 +170,13 @@ User1.show_library_books()
     
 User1.borrow_book("Physics")
 
+#User2 = User()
+
+User1.show_library_books()
+#User2.return_book("Physics")
+
 User1.return_book("Physics")
 
 User1.show_library_books()
+
+print(User1.id)

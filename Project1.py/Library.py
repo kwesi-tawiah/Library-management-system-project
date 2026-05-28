@@ -4,6 +4,8 @@ import Database
 
 import socket
 
+from datetime import datetime
+
 import threading
 
 
@@ -16,7 +18,7 @@ class Library:
             books, fault = Database.load_books()
             if books and not fault:
                 if self.books:
-                    for b in books: # the first fix is herre for b in bookes
+                    for b in books:
                         for book in self.books:
                             if book.title.lower() == b[1].lower() and book.author.lower() == b[3].lower():
                                 break
@@ -25,15 +27,23 @@ class Library:
                             book.id = b[0]
                             if b[5].lower() == "yes":
                                 book.borrowed = True
+                                date = Database.get_datetime(b[0])
+                                print(date)
+                                time_object = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+                                book.return_time = (time_object + datetime.timedelta(days=book.borrow_time)).strftime("%Y-%m-%d %H:%M:%S")
                             elif b[5].lower() == "no":
                                 book.borrowed = False
-                                self.books.append(book)
+                            self.books.append(book)
                 else:
-                    for b in books: # also here for b in bookes must refer to the fetched data
+                    for b in books:
                         book = Books.Book(b[1], b[2], b[3], b[4])
                         book.id = b[0]
                         if b[5].lower() == "yes":
                             book.borrowed = True
+                            date = Database.get_datetime(b[0])
+                            print(date)
+                            time_object = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+                            book.return_time = (time_object + datetime.timedelta(days=book.borrow_time)).strftime("%Y-%m-%d %H:%M:%S")
                         elif b[5].lower() == "no":
                             book.borrowed = False
                         self.books.append(book)
@@ -133,16 +143,16 @@ class Library:
                     break
             else:
                 _id = Database.insert_into_books(
-                    title, year, author, borrow_time)
+                    title.lower(), year, author, borrow_time)
                 if not _id:
                     print("This book is already in library.")
                 else:
-                    book = Books.Book(title, year, author, borrow_time)
+                    book = Books.Book(title.lower(), year, author, borrow_time)
                     book.id = _id
                     self.books.append(book)
                     print("Book added to library.")
         else:
-            book = Books.Book(title, year, author, borrow_time)
+            book = Books.Book(title.lower(), year, author, borrow_time)
             _id = Database.insert_into_books(
                 title, year, author, borrow_time)
             book.id = _id
@@ -181,7 +191,7 @@ Borrowed: {b}
                 print("There are no books in the library.")
         else:
             for book in self.books:
-                print(f"Book_id: {book.id}", sep="")
+                print(f"Book_id: {book.id}", end="")
                 book.book_state()
 
     def show_users(self):
@@ -243,11 +253,11 @@ Returned: {user[8]}
         else:
             print("There are no users.")
 
-    def show_user_borrow_history(self, name):
+    def show_user_borrow_history(self, name, user_id):
         count = 0
         while count < 3:
             data, fault = None, None
-            data, fault = Database.show_user_borrow_history(name)
+            data, fault = Database.show_user_borrow_history(name, user_id)
             if not data and not fault:
                 print("User not found.")
                 break
@@ -329,5 +339,9 @@ print("Shown!")
 librarian.show_books()
 print("Shown!")
 
-Thread = threading.Thread(target = notifications, daemon = True)
-Thread.start()
+#Thread = threading.Thread(target = notifications, daemon = True)
+#Thread.start()
+
+librarian.show_borrow_history()
+
+librarian.show_user_borrow_history("Bruce", 46)
