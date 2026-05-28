@@ -331,6 +331,32 @@ def return_book(book_name, user_name, user_id, client_socket):
         time.sleep(1)
         client_socket.send(message)
 
+def search1(user_id, client_socket):
+    found = False
+    if users:
+        for user in users:
+            if user["id"] == user_id:
+                found = True
+                break
+        if not found:
+            message = pickle.dumps("Please sign up.")
+            length = len(message)
+            client_socket.send(pickle.dumps(length))
+            time.sleep(1)
+            client_socket(message)
+        else:
+            message = pickle.dumps("Please continue")
+            length = len(message)
+            client_socket.send(pickle.dumps(length))
+            time.sleep(1)
+            client_socket(message)
+    else:
+        message = pickle.dumps("Please sign up.")
+        length = len(message)
+        client_socket.send(pickle.dumps(length))
+        time.sleep(1)
+        client_socket.send(message)
+
 def approval():
     while True:
         approve = input("Do you approve?(yes/no): ")
@@ -369,7 +395,7 @@ def delete_table(table):
         Database.delete(table.lower())
 
 delete_table("users")
-reset()
+#reset()
 load_books()
 load_users()
 
@@ -414,10 +440,16 @@ while True:
             if search:
                 request = search[0].group(1)
             else:
-                client_socket.send(
-                f"Please check your request.".encode("utf-8"))
+                print("Check user request.")
+                #client_socket.send(
+                #f"Please check your request.".encode("utf-8"))
 
-            if request.lower() == "show":
+            if request.lower() == "signin":
+                pattern = r"\((\d+)\)"
+                user_id = re.search(pattern, data, re.I)
+                search1(int(user_id.group(1)), client_socket)
+
+            elif request.lower() == "show":
                 print(data[9:])
                 if approval():
                     if users:

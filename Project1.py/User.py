@@ -6,13 +6,58 @@ import pickle
 
 import time
 
+def signin(user_id):
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        client.connect(("127.0.0.1", 3001))
+
+        message = pickle.dumps(f"(SIGNIN) / ({user_id})")
+        length = len(message)
+        client.send(pickle.dumps(length))
+        time.sleep(1)
+        client.send(message)
+
+        length = pickle.loads(client.recv(1024))
+        message = pickle.loads(client.recv(length))
+
+        if message.lower() == "please sign up":
+            return False
+        elif message.lower() == "please continue":
+            return True
+
 class User():
+        
 
     def __init__(self):
         self.id = None
-        question = input("Do you want to sign up or sign in?(yes/no) ")
+        answer1 = "signup"
+        answer2 = "signin"
+        answer = None
 
-        if question.lower() == "yes":
+        while True:
+            ask = input("Do you want to sign up or sign in?(signup or signin) ")
+
+            if ask.replace(" ", "").lower() == answer1:
+                 answer = "yes"
+                 break
+            elif ask.replace(" ", "").lower() == answer2:
+                while True:
+                    user_id = input("Enter you id: ")
+                    if user_id.replace(" ", "").isalpha():
+                        print("Please enter valid user number.")
+                        continue
+                    else:
+                        break
+                #_id = int(user_id)
+                if signin(user_id):
+                    return
+                else:
+                    answer = "yes"
+                    break
+            else:
+                continue   
+
+        if answer.lower() == "yes":
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             client.connect(("127.0.0.1", 3001))
@@ -79,8 +124,10 @@ class User():
                         print(data)
                         break
                 client.close()
-        else:
+        elif answer.replace(" ", "").lower() == "no":
             print("Okay, have a great day!")
+        else:
+            print("Please enter the right answer.")
 
     def show_library_books(self):
         if not self.id:
